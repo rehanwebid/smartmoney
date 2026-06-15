@@ -1,818 +1,2317 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Smart Money</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Smart Money</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    body {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background: #000000;
+      font-family: 'Inter', sans-serif;
+      color: #ffffff;
+      position: fixed;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+    }
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+    .main-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-        body {
-            width: 100vw;
-            height: 100vh;
-            height: 100dvh;
-            background: #000000;
-            font-family: 'Inter', sans-serif;
-            color: #ffffff;
-            position: fixed;
-            top: 0;
-            left: 0;
-            overflow: hidden;
-        }
+    .scrollable-content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+    }
 
-        /* Container utama - TIDAK BISA SCROLL (kaku) */
-        .main-container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+    .page {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+    }
 
-        /* Area konten yang TIDAK BISA SCROLL (kaku/fixed) */
-        .fixed-content {
-            flex-shrink: 0;
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 24px 20px 16px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            overflow: visible;
-        }
+    .page.active {
+      display: flex;
+    }
 
-        /* Area history yang BOLEH SCROLL */
-        .history-scrollable {
-            flex: 1;
-            min-height: 0;
-            width: 100%;
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 0 20px 20px 20px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
+    .fixed-content {
+      flex-shrink: 0;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 20px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow: visible;
+    }
 
-        .history-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-bottom: 8px;
-        }
+    .history-scrollable {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 20px 20px 20px;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
 
-        .balance-section {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-        }
+    .history-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 8px;
+    }
 
-        .balance-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
+    .bottom-navbar {
+      flex-shrink: 0;
+      background: rgba(8, 8, 8, 0.98);
+      backdrop-filter: blur(12px);
+      border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+      padding: 4px 12px 6px 12px;
+    }
 
-        .balance-label {
-            font-size: 11px;
-            font-weight: 500;
-            color: #888888;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
+    .nav-items {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      max-width: 480px;
+      margin: 0 auto;
+      gap: 4px;
+    }
 
-        .balance-amount {
-            font-size: 26px;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-            line-height: 1.1;
-            cursor: pointer;
-            transition: opacity 0.1s;
-        }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0px;
+      cursor: pointer;
+      padding: 4px 0;
+      border-radius: 8px;
+      flex: 1;
+      transition: all 0.12s ease;
+    }
 
-        .balance-amount:active {
-            opacity: 0.7;
-        }
+    .nav-item:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.04);
+    }
 
-        .level-badge {
-            font-size: 11px;
-            font-weight: 600;
-            color: #ffffff;
-            background: #1a1a1a;
-            border: 1px solid #333333;
-            padding: 6px 14px;
-            border-radius: 6px;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: opacity 0.1s;
-        }
+    .nav-icon {
+      font-size: 20px;
+      color: #555555;
+      transition: all 0.12s;
+    }
 
-        .level-badge:active {
-            opacity: 0.7;
-        }
+    .nav-label {
+      display: none;
+    }
 
-        .chart-box {
-            width: 100%;
-            aspect-ratio: 17 / 9;
-            border: 1px solid #2a2a2a;
-            border-radius: 8px;
-            background: #050505;
-            overflow: hidden;
-            position: relative;
-        }
+    .nav-item.active {
+      gap: 2px;
+      padding: 3px 0 4px 0;
+    }
 
-        #chartCanvas {
-            width: 100% !important;
-            height: 100% !important;
-            display: block;
-        }
+    .nav-item.active .nav-icon {
+      font-size: 18px;
+      color: #ffffff;
+    }
 
-        .chart-periods {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            display: flex;
-            gap: 4px;
-            z-index: 5;
-        }
+    .nav-item.active .nav-label {
+      display: block;
+      font-size: 9px;
+      font-weight: 500;
+      color: #ffffff;
+      letter-spacing: 0.2px;
+    }
 
-        .period-btn {
-            font-family: 'Inter', sans-serif;
-            font-size: 9px;
-            font-weight: 500;
-            color: #666666;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
-            padding: 4px 10px;
-            border-radius: 20px;
-            cursor: pointer;
-            letter-spacing: 0.3px;
-            transition: all 0.2s;
-        }
+    .balance-section {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
 
-        .period-btn.active {
-            background: #2a2a2a;
-            border-color: #444444;
-            color: #ffffff;
-        }
+    .balance-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
 
-        .input-nominal {
-            width: 100%;
-            font-family: 'Inter', sans-serif;
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
-            background: #111111;
-            border: 1px solid #2a2a2a;
-            padding: 16px 20px;
-            border-radius: 10px;
-            outline: none;
-            text-align: center;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-        }
+    .balance-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #888888;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
 
-        .input-nominal::placeholder {
-            color: #444444;
-            font-weight: 400;
-        }
+    .balance-amount {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      cursor: pointer;
+    }
 
-        .input-nominal:focus {
-            border-color: #444444;
-            background: #181818;
-        }
+    .top-right-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        .action-row {
-            display: flex;
-            gap: 10px;
-        }
+    .bell-badge {
+      width: 34px;
+      height: 34px;
+      background: #1a1a1a;
+      border: 1px solid #333333;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ffffff;
+    }
 
-        .btn-tarik {
-            flex: 1;
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            color: #ffffff;
-            background: transparent;
-            border: 1px solid #333333;
-            padding: 14px 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-        }
+    .level-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ffffff;
+      background: #1a1a1a;
+      border: 1px solid #333333;
+      padding: 6px 14px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      cursor: pointer;
+      height: 34px;
+      display: flex;
+      align-items: center;
+    }
 
-        .btn-tarik:active {
-            background: #111111;
-            border-color: #555555;
-        }
+    .chart-box {
+      width: 100%;
+      aspect-ratio: 17 / 9;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      background: #050505;
+      overflow: hidden;
+      position: relative;
+    }
 
-        .btn-tarik i {
-            font-size: 11px;
-        }
+    #chartCanvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
 
-        .btn-deposit {
-            flex: 1;
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            color: #000000;
-            background: #ffffff;
-            border: none;
-            padding: 14px 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-        }
+    .chart-periods {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      display: flex;
+      gap: 4px;
+      z-index: 5;
+    }
 
-        .btn-deposit:active {
-            background: #d0d0d0;
-            transform: scale(0.98);
-        }
+    .period-btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      font-weight: 500;
+      color: #666666;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      padding: 4px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+    }
 
-        .btn-deposit i {
-            font-size: 11px;
-        }
+    .period-btn.active {
+      background: #2a2a2a;
+      border-color: #444444;
+      color: #ffffff;
+    }
 
-        .bottom-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-top: 4px;
-        }
+    .input-nominal {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: #ffffff;
+      background: #111111;
+      border: 1px solid #2a2a2a;
+      padding: 16px 20px;
+      border-radius: 10px;
+      outline: none;
+      text-align: center;
+    }
 
-        .history-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            color: #777777;
-            letter-spacing: 0.5px;
-        }
+    .input-nominal::placeholder {
+      color: #444444;
+      font-weight: 400;
+    }
 
-        .history-label i {
-            font-size: 13px;
-            color: #555555;
-        }
+    .input-nominal:focus {
+      border-color: #444444;
+      background: #181818;
+    }
 
-        .limit-text {
-            font-size: 11px;
-            font-weight: 500;
-            color: #555555;
-            letter-spacing: 0.5px;
-        }
+    .input-keterangan {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      color: #ffffff;
+      background: #111111;
+      border: 1px solid #2a2a2a;
+      padding: 10px 14px;
+      border-radius: 8px;
+      outline: none;
+      text-align: left;
+    }
 
-        .history-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #0d0d0d;
-            border: 1px solid #1a1a1a;
-            padding: 12px 14px;
-            border-radius: 10px;
-            gap: 12px;
-        }
+    .input-keterangan::placeholder {
+      color: #555555;
+      font-weight: 400;
+      text-align: left;
+    }
 
-        .history-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-            flex: 1;
-        }
+    .input-keterangan:focus {
+      border-color: #444444;
+      background: #181818;
+    }
 
-        .history-icon-circle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
+    .action-row {
+      display: flex;
+      gap: 10px;
+    }
 
-        .history-icon-circle.in {
-            background: #1a1a1a;
-            color: #ffffff;
-            border: 1px solid #333333;
-        }
+    .btn-tarik {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      background: transparent;
+      border: 1px solid #333333;
+      padding: 14px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
 
-        .history-icon-circle.out {
-            background: #0f0f0f;
-            color: #777777;
-            border: 1px solid #1f1f1f;
-        }
+    .btn-tarik:active {
+      background: #111111;
+    }
 
-        .history-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 0;
-        }
+    .btn-deposit {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #000000;
+      background: #ffffff;
+      border: none;
+      padding: 14px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
 
-        .history-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: #ffffff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+    .btn-deposit:active {
+      background: #d0d0d0;
+    }
 
-        .history-date {
-            font-size: 10px;
-            font-weight: 400;
-            color: #555555;
-            letter-spacing: 0.3px;
-        }
+    .bottom-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
 
-        .history-amount {
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            flex-shrink: 0;
-        }
+    .history-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #777777;
+    }
 
-        .history-amount.in {
-            color: #ffffff;
-        }
+    .limit-text {
+      font-size: 11px;
+      font-weight: 500;
+      color: #555555;
+    }
 
-        .history-amount.out {
-            color: #777777;
-        }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      padding: 12px 14px;
+      border-radius: 10px;
+      gap: 12px;
+    }
 
-        .history-empty {
-            text-align: center;
-            color: #333333;
-            font-size: 12px;
-            padding: 24px 0;
-            font-weight: 500;
-        }
+    .history-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
 
-        @media (min-width: 768px) {
-            .fixed-content {
-                padding: 32px 24px 16px 24px;
-                gap: 18px;
-            }
-            .balance-amount {
-                font-size: 30px;
-            }
-            .chart-box {
-                border-radius: 10px;
-            }
-            .input-nominal {
-                font-size: 20px;
-                padding: 18px 22px;
-            }
-            .btn-tarik,
-            .btn-deposit {
-                font-size: 14px;
-                padding: 16px 20px;
-            }
-            .history-scrollable {
-                padding: 0 24px 24px 24px;
-            }
-        }
-    </style>
+    .history-icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .history-icon-circle.in {
+      background: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #333333;
+    }
+
+    .history-icon-circle.out {
+      background: #0f0f0f;
+      color: #777777;
+      border: 1px solid #1f1f1f;
+    }
+
+    .history-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .history-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-date {
+      font-size: 10px;
+      font-weight: 400;
+      color: #555555;
+    }
+
+    .history-amount {
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .history-amount.in {
+      color: #ffffff;
+    }
+
+    .history-amount.out {
+      color: #777777;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: #333333;
+      font-size: 12px;
+      padding: 24px 0;
+      font-weight: 500;
+    }
+
+    .history-page-header {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 20px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #999999;
+    }
+
+    .history-page-header i {
+      font-size: 13px;
+      color: #999999;
+    }
+
+    .history-categories {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px 20px 8px 20px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .category-btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      color: #666666;
+      background: #111111;
+      border: 1px solid #1a1a1a;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: all 0.15s ease;
+    }
+
+    .category-btn.active {
+      background: #ffffff;
+      border-color: #ffffff;
+      color: #000000;
+    }
+
+    .history-page-list {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 20px 20px 20px;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Target Page */
+    .target-page-container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 20px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .target-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .target-card {
+      background: #0d0d0d;
+      border: 2px solid #2a2a2a;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .target-card-img-wrap {
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a1a;
+      min-height: 100px;
+    }
+
+    .target-card-img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .target-card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .target-card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .target-card-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+    }
+
+    .target-card-amount {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .target-progress-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .target-progress-bar {
+      flex: 1;
+      height: 8px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .target-progress-fill {
+      height: 100%;
+      background: #ffffff;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .target-progress-percent {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      min-width: 38px;
+      text-align: right;
+    }
+
+    .target-card-delete {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: #ff5555;
+      background: rgba(255, 68, 68, 0.08);
+      border: 1px solid rgba(255, 68, 68, 0.15);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    .target-card-delete:active {
+      background: rgba(255, 68, 68, 0.2);
+    }
+
+    .target-empty {
+      text-align: center;
+      color: #333333;
+      font-size: 13px;
+      padding: 16px 0;
+      font-weight: 500;
+    }
+
+    .btn-create-target-bottom {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #000000;
+      background: #ffffff;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-shrink: 0;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .btn-create-target-bottom:active {
+      background: #d0d0d0;
+    }
+
+    .btn-create-target-bottom.disabled {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    /* Popup */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .popup-overlay.active {
+      display: flex;
+    }
+
+    .popup-box {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .popup-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      text-align: center;
+      letter-spacing: -0.2px;
+    }
+
+    .popup-input {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: #ffffff;
+      background: #111111;
+      border: 1px solid #2a2a2a;
+      padding: 14px 16px;
+      border-radius: 10px;
+      outline: none;
+    }
+
+    .popup-input::placeholder {
+      color: #555555;
+    }
+
+    .popup-input:focus {
+      border-color: #444444;
+    }
+
+    .popup-img-preview {
+      width: 100%;
+      min-height: 100px;
+      border-radius: 10px;
+      background: #1a1a1a;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555555;
+      font-size: 40px;
+      border: 1px dashed #2a2a2a;
+      overflow: hidden;
+    }
+
+    .popup-img-preview img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .popup-btn-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .popup-btn {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .popup-btn-primary {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+    }
+
+    .popup-btn-primary:active {
+      background: #d0d0d0;
+    }
+
+    .popup-btn-secondary {
+      background: transparent;
+      color: #ffffff;
+      border: 1px solid #333333;
+    }
+
+    .popup-btn-secondary:active {
+      background: #111111;
+    }
+
+    .popup-error {
+      font-size: 11px;
+      color: #ff5555;
+      text-align: center;
+      display: none;
+    }
+
+    /* Konfirmasi Popup */
+    .confirm-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .confirm-overlay.active {
+      display: flex;
+    }
+
+    .confirm-box {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .confirm-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: #cccccc;
+      line-height: 1.5;
+    }
+
+    .confirm-text strong {
+      color: #ffffff;
+    }
+
+    .confirm-btn-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .confirm-btn {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .confirm-btn-danger {
+      background: #ff4444;
+      color: #ffffff;
+      border: none;
+    }
+
+    .confirm-btn-danger:active {
+      background: #cc0000;
+    }
+
+    .confirm-btn-cancel {
+      background: transparent;
+      color: #ffffff;
+      border: 1px solid #333333;
+    }
+
+    .confirm-btn-cancel:active {
+      background: #111111;
+    }
+
+    /* Toast Notification */
+    .toast-notification {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a1a1a;
+      border: 1px solid #333333;
+      border-radius: 12px;
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .toast-notification.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-notification i {
+      color: #ffffff;
+      font-size: 16px;
+    }
+
+    .toast-notification span {
+      font-size: 12px;
+      font-weight: 500;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    /* Profile Page */
+    .profile-page-container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 28px 20px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .profile-top-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .profile-avatar-wrap {
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #1a1a1a;
+      border: 2px solid #2a2a2a;
+    }
+
+    .profile-avatar-pen {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 26px;
+      height: 26px;
+      background: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000000;
+      font-size: 11px;
+      border: 2px solid #000000;
+    }
+
+    .profile-info-right {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .profile-name-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.3px;
+      cursor: pointer;
+      line-height: 1.2;
+    }
+
+    .profile-level-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ffffff;
+      background: #1a1a1a;
+      border: 1px solid #333333;
+      padding: 5px 12px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .profile-handle {
+      font-size: 13px;
+      font-weight: 400;
+      color: #777777;
+      cursor: pointer;
+      font-style: italic;
+    }
+
+    /* Activity Graph */
+    .profile-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .profile-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #999999;
+      letter-spacing: -0.1px;
+      text-transform: uppercase;
+    }
+
+    .profile-section-subtitle {
+      font-size: 10px;
+      color: #555555;
+      font-style: italic;
+    }
+
+    .activity-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 3px;
+      max-width: 320px;
+    }
+
+    .activity-cell {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 2px;
+      background: #1a1a1a;
+    }
+
+    .activity-cell.level-0 {
+      background: #0a0a0a;
+    }
+    .activity-cell.level-1 {
+      background: #1a1a1a;
+    }
+    .activity-cell.level-2 {
+      background: #3a3a3a;
+    }
+    .activity-cell.level-3 {
+      background: #6a6a6a;
+    }
+    .activity-cell.level-4 {
+      background: #aaaaaa;
+    }
+    .activity-cell.level-5 {
+      background: #ffffff;
+    }
+
+    .activity-legend {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: #555555;
+      font-style: italic;
+    }
+
+    .activity-legend-cells {
+      display: flex;
+      gap: 3px;
+    }
+
+    .activity-legend-cells .activity-cell {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Achievement Section */
+    .achievement-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .achievement-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #888888;
+      font-style: italic;
+    }
+
+    .achievement-title i {
+      color: #ffffff;
+      font-size: 13px;
+    }
+
+    .achievement-card {
+      width: 100%;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .achievement-card-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .achievement-card-amount {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .achievement-empty {
+      font-size: 11px;
+      color: #444444;
+      font-style: italic;
+      text-align: center;
+    }
+
+    /* Owner Message */
+    .owner-message-box {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 12px;
+      padding: 16px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #aaaaaa;
+    }
+
+    .owner-message-box b {
+      color: #ffffff;
+    }
+
+    /* Media & Share Row */
+    .media-share-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .media-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .media-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #777777;
+    }
+
+    .media-icons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .media-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .media-icon:active {
+      background: #2a2a2a;
+    }
+
+    .copy-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #000000;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .copy-btn:active {
+      background: #d0d0d0;
+    }
+
+    @media (min-width: 768px) {
+      .fixed-content {
+        padding: 32px 24px 16px 24px;
+        gap: 16px;
+      }
+      .balance-amount {
+        font-size: 30px;
+      }
+      .btn-tarik,
+      .btn-deposit {
+        font-size: 14px;
+        padding: 16px 20px;
+      }
+      .bottom-navbar {
+        padding: 5px 16px 7px 16px;
+      }
+      .nav-icon {
+        font-size: 21px;
+      }
+      .nav-item.active .nav-icon {
+        font-size: 19px;
+      }
+      .nav-item.active .nav-label {
+        font-size: 10px;
+      }
+      .history-page-header {
+        padding: 32px 24px 0 24px;
+      }
+      .history-categories {
+        padding: 14px 24px 10px 24px;
+      }
+      .history-page-list {
+        padding: 0 24px 24px 24px;
+      }
+      .target-page-container {
+        padding: 32px 24px 24px 24px;
+      }
+      .profile-page-container {
+        padding: 32px 24px 24px 24px;
+      }
+    }
+  </style>
 </head>
 <body>
-
-    <div class="main-container">
-        <!-- Area KAKU / FIXED (tidak bisa scroll) -->
+  <div class="main-container">
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+      <div class="scrollable-content">
         <div class="fixed-content">
-            <div class="balance-section">
-                <div class="balance-info">
-                    <span class="balance-label">Total Saldo</span>
-                    <span class="balance-amount" id="balanceDisplay">Rp. 0</span>
-                </div>
-                <div class="level-badge" id="levelDisplay">Lv. 0</div>
+          <div class="balance-section">
+            <div class="balance-info">
+              <span class="balance-label">Total Saldo</span>
+              <span class="balance-amount" id="balanceDisplay">Rp. 0</span>
             </div>
-
-            <div class="chart-box">
-                <canvas id="chartCanvas"></canvas>
-                <div class="chart-periods">
-                    <button class="period-btn" data-period="week">Week</button>
-                    <button class="period-btn active" data-period="month">Month</button>
-                    <button class="period-btn" data-period="year">Year</button>
-                </div>
+            <div class="top-right-badges">
+              <div class="bell-badge" id="bellBadge">
+                <i class="fas fa-bell"></i>
+              </div>
+              <div class="level-badge" id="levelDisplay">Lv. 0</div>
             </div>
+          </div>
 
-            <input type="text" class="input-nominal" id="nominalInput" placeholder="Rp. 0" inputmode="numeric">
-
-            <div class="action-row">
-                <button class="btn-tarik" id="btnTarik">
-                    <i class="fa-solid fa-arrow-down"></i> Tarik
-                </button>
-                <button class="btn-deposit" id="btnDeposit">
-                    <i class="fa-solid fa-arrow-up"></i> Deposit
-                </button>
+          <div class="chart-box">
+            <canvas id="chartCanvas"></canvas>
+            <div class="chart-periods">
+              <button class="period-btn" data-period="week">Week</button>
+              <button class="period-btn active" data-period="month">Month</button>
+              <button class="period-btn" data-period="year">Year</button>
             </div>
+          </div>
 
-            <div class="bottom-info">
-                <div class="history-label">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span>History</span>
-                </div>
-                <span class="limit-text" id="limitText">0/10</span>
+          <input type="text" class="input-nominal" id="nominalInput" placeholder="Rp. 0" inputmode="numeric">
+          <input type="text" class="input-keterangan" id="keteranganInput" placeholder="Isi keterangan (opsional)" autocomplete="off">
+
+          <div class="action-row">
+            <button class="btn-tarik" id="btnTarik">
+              <i class="fa-solid fa-arrow-down"></i> Tarik
+            </button>
+            <button class="btn-deposit" id="btnDeposit">
+              <i class="fa-solid fa-arrow-up"></i> Deposit
+            </button>
+          </div>
+
+          <div class="bottom-info">
+            <div class="history-label">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span>History</span>
             </div>
+            <span class="limit-text" id="limitText">0/4</span>
+          </div>
         </div>
 
-        <!-- Area HISTORY yang BOLEH SCROLL -->
-        <div class="history-scrollable">
-            <div class="history-section" id="historyList">
-                <div class="history-empty">Belum ada transaksi</div>
-            </div>
+        <div class="history-scrollable" id="homeHistoryScrollable">
+          <div class="history-section" id="homeHistoryList">
+            <div class="history-empty">Belum ada transaksi</div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <script>
-        (function() {
-            const STORAGE_KEY = 'smart_money_data';
-            const MAX_TX = 10;
-            const defaultState = {
-                balance: 0,
-                level: 0,
-                period: 'month',
-                transactions: [],
-                dailyBalances: {},
-                isBalanceHidden: false,
-                isLevelHidden: false
-            };
-            let state;
+    <!-- HISTORY PAGE -->
+    <div class="page" id="page-history">
+      <div class="history-page-header">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <span>Riwayat Transaksi</span>
+      </div>
+      <div class="history-categories" id="historyCategories">
+        <button class="category-btn active" data-filter="all">Semua</button>
+        <button class="category-btn" data-filter="in">Pemasukan</button>
+        <button class="category-btn" data-filter="out">Pengeluaran</button>
+      </div>
+      <div class="history-page-list" id="historyPageList">
+        <div class="history-empty">Belum ada transaksi</div>
+      </div>
+    </div>
 
-            function load() {
-                try {
-                    const raw = localStorage.getItem(STORAGE_KEY);
-                    state = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(defaultState));
-                    if (!state.dailyBalances) state.dailyBalances = {};
-                    if (state.isBalanceHidden === undefined) state.isBalanceHidden = false;
-                    if (state.isLevelHidden === undefined) state.isLevelHidden = false;
-                    if (!state.transactions) state.transactions = [];
-                    if (state.level === undefined) state.level = levelFrom(state.balance);
-                } catch (e) { 
-                    state = JSON.parse(JSON.stringify(defaultState)); 
+    <!-- TARGET PAGE -->
+    <div class="page" id="page-target">
+      <div class="target-page-container" id="targetPageContainer">
+      </div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div class="page" id="page-profile">
+      <div class="profile-page-container" id="profilePageContainer">
+      </div>
+    </div>
+
+    <div class="bottom-navbar">
+      <div class="nav-items">
+        <div class="nav-item active" data-page="home">
+          <i class="fas fa-home nav-icon"></i>
+          <span class="nav-label">Home</span>
+        </div>
+        <div class="nav-item" data-page="history">
+          <i class="fas fa-clock-rotate-left nav-icon"></i>
+          <span class="nav-label">History</span>
+        </div>
+        <div class="nav-item" data-page="target">
+          <i class="fas fa-bullseye nav-icon"></i>
+          <span class="nav-label">Target</span>
+        </div>
+        <div class="nav-item" data-page="profile">
+          <i class="fas fa-user nav-icon"></i>
+          <span class="nav-label">Profil</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast-notification" id="toastNotification">
+    <i class="fa-solid fa-circle-check"></i>
+    <span>Link download sudah tersalin</span>
+  </div>
+
+  <!-- POPUP BUAT TARGET -->
+  <div class="popup-overlay" id="popupOverlay">
+    <div class="popup-box">
+      <div class="popup-title">Buat Target Baru</div>
+      <input type="file" id="popupImageInput" accept="image/*" style="display:none;">
+      <div class="popup-img-preview" id="popupImgPreview">
+        <i class="fa-solid fa-image"></i>
+      </div>
+      <input type="text" class="popup-input" id="popupNameInput" placeholder="Nama target">
+      <input type="text" class="popup-input" id="popupAmountInput" placeholder="Rp. 0" inputmode="numeric">
+      <div class="popup-error" id="popupError"></div>
+      <div class="popup-btn-row">
+        <button class="popup-btn popup-btn-secondary" id="btnPopupCancel">Batal</button>
+        <button class="popup-btn popup-btn-primary" id="btnPopupCreate">Buat target</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP KONFIRMASI HAPUS -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <div class="confirm-text" id="confirmText">Yakin hapus target <strong id="confirmTargetName"></strong>?</div>
+      <div class="confirm-btn-row">
+        <button class="confirm-btn confirm-btn-cancel" id="btnConfirmCancel">Batal</button>
+        <button class="confirm-btn confirm-btn-danger" id="btnConfirmDelete">Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP EDIT NAMA -->
+  <div class="popup-overlay" id="popupNameOverlay">
+    <div class="popup-box">
+      <div class="popup-title">Edit Nama</div>
+      <input type="text" class="popup-input" id="popupNameEditInput" placeholder="Nama kamu">
+      <div class="popup-btn-row">
+        <button class="popup-btn popup-btn-secondary" id="btnNameCancel">Batal</button>
+        <button class="popup-btn popup-btn-primary" id="btnNameSave">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP EDIT USERNAME -->
+  <div class="popup-overlay" id="popupHandleOverlay">
+    <div class="popup-box">
+      <div class="popup-title">Edit Username</div>
+      <input type="text" class="popup-input" id="popupHandleEditInput" placeholder="@username">
+      <div class="popup-btn-row">
+        <button class="popup-btn popup-btn-secondary" id="btnHandleCancel">Batal</button>
+        <button class="popup-btn popup-btn-primary" id="btnHandleSave">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const STORAGE_KEY = 'smart_money_data';
+      const MAX_HOME_TX = 4;
+      const MAX_HISTORY = 250;
+      const MAX_TARGET = 5;
+
+      const defaultState = {
+        balance: 0,
+        period: 'month',
+        transactions: [],
+        dailyBalances: {},
+        isBalanceHidden: false,
+        isLevelHidden: false,
+        targets: [],
+        profileName: 'Your Name',
+        profileImage: null,
+        profileHandle: '@username'
+      };
+
+      let state;
+      let currentFilter = 'all';
+      let popupImageData = null;
+      let pendingDeleteIndex = null;
+      let toastTimeout = null;
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            state = JSON.parse(raw);
+            if (!state.dailyBalances) state.dailyBalances = {};
+            if (state.isBalanceHidden === undefined) state.isBalanceHidden = false;
+            if (state.isLevelHidden === undefined) state.isLevelHidden = false;
+            if (!state.transactions) state.transactions = [];
+            if (!state.targets) state.targets = [];
+            if (!state.profileName) state.profileName = 'Your Name';
+            if (state.profileImage === undefined) state.profileImage = null;
+            if (!state.profileHandle) state.profileHandle = '@username';
+          } else {
+            state = JSON.parse(JSON.stringify(defaultState));
+          }
+        } catch (e) {
+          state = JSON.parse(JSON.stringify(defaultState));
+        }
+      }
+
+      function save() {
+        try {
+          const toSave = JSON.parse(JSON.stringify(state));
+          toSave.targets = toSave.targets.map(t => ({ ...t, imageData: null }));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+        } catch (e) {}
+      }
+
+      function fmt(n) {
+        return 'Rp. ' + n.toLocaleString('id-ID');
+      }
+
+      function today() {
+        return new Date().toISOString().split('T')[0];
+      }
+
+      function now() {
+        const d = new Date();
+        return today() + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      }
+
+      function computeLevel(balance) {
+        if (balance < 100000) return 1;
+        let level = 1;
+        let lower = 0;
+        let upper = 99999;
+        while (balance > upper) {
+          level++;
+          lower = upper + 1;
+          upper = lower * 2 - 1;
+        }
+        return level;
+      }
+
+      function addTx(type, amount, keterangan) {
+        let name;
+        if (keterangan && keterangan.trim() !== '') {
+          name = keterangan.trim();
+        } else {
+          name = type === 'in' ? 'Deposit' : 'Tarik';
+        }
+        state.transactions.push({
+          id: Date.now(),
+          type,
+          amount,
+          date: now(),
+          name: name
+        });
+        if (state.transactions.length > MAX_HISTORY) {
+          state.transactions.splice(0, state.transactions.length - MAX_HISTORY);
+        }
+        state.balance += type === 'in' ? amount : -amount;
+        if (state.balance < 0) state.balance = 0;
+        state.dailyBalances[today()] = state.balance;
+        save();
+        refreshUI();
+        refreshChart();
+      }
+
+      function refreshBalanceDisplay() {
+        const balanceElement = document.getElementById('balanceDisplay');
+        if (!balanceElement) return;
+        if (state.isBalanceHidden) {
+          balanceElement.textContent = 'Rp. •••';
+        } else {
+          balanceElement.textContent = fmt(state.balance);
+        }
+      }
+
+      function refreshLevelDisplay() {
+        const levelElement = document.getElementById('levelDisplay');
+        if (!levelElement) return;
+        const lv = computeLevel(state.balance);
+        if (state.isLevelHidden) {
+          levelElement.textContent = 'Lv. •';
+        } else {
+          levelElement.textContent = 'Lv. ' + lv;
+        }
+      }
+
+      function setupDoubleTapBalance() {
+        const balanceElement = document.getElementById('balanceDisplay');
+        if (!balanceElement) return;
+        let lastTap = 0;
+        balanceElement.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const nowTime = Date.now();
+          if (nowTime - lastTap < 300) {
+            state.isBalanceHidden = !state.isBalanceHidden;
+            save();
+            refreshBalanceDisplay();
+            lastTap = 0;
+          } else {
+            lastTap = nowTime;
+          }
+        });
+      }
+
+      function setupDoubleTapLevel() {
+        const levelElement = document.getElementById('levelDisplay');
+        if (!levelElement) return;
+        let lastTap = 0;
+        levelElement.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const nowTime = Date.now();
+          if (nowTime - lastTap < 300) {
+            state.isLevelHidden = !state.isLevelHidden;
+            save();
+            refreshLevelDisplay();
+            lastTap = 0;
+          } else {
+            lastTap = nowTime;
+          }
+        });
+      }
+
+      function setupBellClick() {
+        const bellBadge = document.getElementById('bellBadge');
+        if (!bellBadge) return;
+        bellBadge.addEventListener('click', () => {
+          alert('Fitur notifikasi akan datang!');
+        });
+      }
+
+      function showToast() {
+        const toast = document.getElementById('toastNotification');
+        if (!toast) return;
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toast.classList.add('show');
+        toastTimeout = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2000);
+      }
+
+      function renderHomeHistory() {
+        const el = document.getElementById('homeHistoryList');
+        if (!el) return;
+        const recent = state.transactions.slice(-MAX_HOME_TX);
+        if (!recent.length) {
+          el.innerHTML = '<div class="history-empty">Belum ada transaksi</div>';
+          return;
+        }
+        el.innerHTML = [...recent].reverse().map(tx => {
+          const cls = tx.type === 'in' ? 'in' : 'out';
+          const arrow = tx.type === 'in' ? 'fa-arrow-up' : 'fa-arrow-down';
+          const pre = tx.type === 'in' ? '+' : '-';
+          return `<div class="history-item">
+            <div class="history-left">
+              <div class="history-icon-circle ${cls}">
+                <i class="fa-solid ${arrow}"></i>
+              </div>
+              <div class="history-info">
+                <span class="history-name">${tx.name}</span>
+                <span class="history-date">${tx.date}</span>
+              </div>
+            </div>
+            <span class="history-amount ${cls}">${pre} ${fmt(tx.amount)}</span>
+          </div>`;
+        }).join('');
+      }
+
+      function renderHistoryPage() {
+        const el = document.getElementById('historyPageList');
+        if (!el) return;
+        let filtered = [...state.transactions];
+        if (currentFilter === 'in') filtered = filtered.filter(tx => tx.type === 'in');
+        if (currentFilter === 'out') filtered = filtered.filter(tx => tx.type === 'out');
+        if (!filtered.length) {
+          el.innerHTML = '<div class="history-empty">Belum ada transaksi</div>';
+          return;
+        }
+        el.innerHTML = filtered.reverse().map(tx => {
+          const cls = tx.type === 'in' ? 'in' : 'out';
+          const arrow = tx.type === 'in' ? 'fa-arrow-up' : 'fa-arrow-down';
+          const pre = tx.type === 'in' ? '+' : '-';
+          return `<div class="history-item">
+            <div class="history-left">
+              <div class="history-icon-circle ${cls}">
+                <i class="fa-solid ${arrow}"></i>
+              </div>
+              <div class="history-info">
+                <span class="history-name">${tx.name}</span>
+                <span class="history-date">${tx.date}</span>
+              </div>
+            </div>
+            <span class="history-amount ${cls}">${pre} ${fmt(tx.amount)}</span>
+          </div>`;
+        }).join('');
+      }
+
+      function renderTargetPage() {
+        const container = document.getElementById('targetPageContainer');
+        if (!container) return;
+
+        const isFull = state.targets.length >= MAX_TARGET;
+
+        let html = '';
+
+        html += '<div class="target-list" id="targetList">';
+        if (!state.targets.length) {
+          html += '<div class="target-empty">Belum ada target</div>';
+        } else {
+          state.targets.forEach((t, idx) => {
+            const progress = t.targetAmount > 0 ? Math.min((state.balance / t.targetAmount) * 100, 100) : 0;
+            const percent = Math.round(progress);
+            html += `<div class="target-card">
+              <div class="target-card-img-wrap">
+                ${t.imageData
+                  ? `<img class="target-card-img" src="${t.imageData}" alt="${t.name}">`
+                  : `<div style="width:100%;min-height:120px;display:flex;align-items:center;justify-content:center;color:#333;font-size:48px;"><i class="fa-solid fa-image"></i></div>`
                 }
-            }
+              </div>
+              <div class="target-card-body">
+                <div class="target-card-row">
+                  <span class="target-card-name">${t.name}</span>
+                  <span class="target-card-amount">${fmt(t.targetAmount)}</span>
+                </div>
+                <div class="target-progress-container">
+                  <div class="target-progress-bar">
+                    <div class="target-progress-fill" style="width:${percent}%;"></div>
+                  </div>
+                  <span class="target-progress-percent">${percent}%</span>
+                </div>
+                <button class="target-card-delete" data-index="${idx}">
+                  <i class="fa-solid fa-trash-can"></i> Hapus target
+                </button>
+              </div>
+            </div>`;
+          });
+        }
+        html += '</div>';
 
-            function save() { 
-                try { 
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
-                } catch (e) {} 
-            }
+        html += `<button class="btn-create-target-bottom${isFull ? ' disabled' : ''}" id="btnCreateTargetBottom">
+          <i class="fa-solid fa-plus"></i> Buat Target Baru
+        </button>`;
 
-            function levelFrom(b) { 
-                return b < 1000000 ? 0 : Math.floor(b / 1000000); 
-            }
+        container.innerHTML = html;
 
-            function fmt(n) { 
-                return 'Rp. ' + n.toLocaleString('id-ID'); 
-            }
+        const btnCreate = document.getElementById('btnCreateTargetBottom');
+        if (btnCreate && !isFull) {
+          btnCreate.addEventListener('click', openPopup);
+        }
 
-            function today() { 
-                return new Date().toISOString().split('T')[0]; 
-            }
+        document.querySelectorAll('.target-card-delete').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const index = parseInt(btn.dataset.index);
+            openConfirmDelete(index);
+          });
+        });
+      }
 
-            function now() {
-                const d = new Date();
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                const hours = String(d.getHours()).padStart(2, '0');
-                const minutes = String(d.getMinutes()).padStart(2, '0');
-                return `${year}-${month}-${day}, ${hours}:${minutes}`;
-            }
+      function renderProfilePage() {
+        const container = document.getElementById('profilePageContainer');
+        if (!container) return;
 
-            function addTx(type, amount) {
-                // HAPUS SISTEM CLEANUP PER HARI
-                // Sekarang hanya hapus saat sudah 10 transaksi dan ingin menambah transaksi baru
-                // Maka transaksi TERLAMA (index 0) yang dihapus
-                
-                if (state.transactions.length >= MAX_TX) {
-                    // Hapus transaksi paling pertama/terlama
-                    state.transactions.shift();
-                }
-                
-                // Tambah transaksi baru
-                state.transactions.push({ 
-                    id: Date.now(), 
-                    type, 
-                    amount, 
-                    date: now(), 
-                    name: type === 'in' ? 'Deposit' : 'Tarik'
-                });
-                
-                // Update balance
-                state.balance += type === 'in' ? amount : -amount;
-                if (state.balance < 0) state.balance = 0;
-                
-                // Update level
-                state.level = levelFrom(state.balance);
-                
-                // Simpan daily balance untuk chart
-                state.dailyBalances[today()] = state.balance;
-                
+        const lv = computeLevel(state.balance);
+        const lastTarget = state.targets.length > 0 ? state.targets[state.targets.length - 1] : null;
+
+        let html = '';
+
+        html += `<div class="profile-top-row">
+          <div class="profile-avatar-wrap" id="profileAvatarWrap">
+            ${state.profileImage
+              ? `<img class="profile-avatar" src="${state.profileImage}" alt="Avatar">`
+              : `<div class="profile-avatar" style="display:flex;align-items:center;justify-content:center;font-size:32px;color:#555;"><i class="fa-solid fa-user"></i></div>`
+            }
+            <div class="profile-avatar-pen"><i class="fa-solid fa-pen"></i></div>
+          </div>
+          <div class="profile-info-right">
+            <div class="profile-name-row">
+              <span class="profile-name" id="profileNameDisplay">${state.profileName}</span>
+              <span class="profile-level-badge">Lv. ${lv}</span>
+            </div>
+            <span class="profile-handle" id="profileHandleDisplay">${state.profileHandle}</span>
+          </div>
+        </div>`;
+
+        html += `<div class="profile-section-header">
+          <span class="profile-section-title">Aktivitas 30 Hari</span>
+          <span class="profile-section-subtitle">hitam-putih</span>
+        </div>`;
+        html += `<div class="activity-grid" id="activityGrid"></div>`;
+        html += `<div class="activity-legend">
+          <span>Kurang</span>
+          <div class="activity-legend-cells">
+            <div class="activity-cell level-0"></div>
+            <div class="activity-cell level-2"></div>
+            <div class="activity-cell level-3"></div>
+            <div class="activity-cell level-4"></div>
+            <div class="activity-cell level-5"></div>
+          </div>
+          <span>Aktif</span>
+        </div>`;
+
+        html += `<div class="achievement-section">
+          <div class="achievement-title">
+            <i class="fa-solid fa-trophy"></i>
+            <span>Pencapaian Terbaru</span>
+          </div>`;
+        if (lastTarget) {
+          html += `<div class="achievement-card">
+            <span class="achievement-card-name">${lastTarget.name}</span>
+            <span class="achievement-card-amount">${fmt(lastTarget.targetAmount)}</span>
+          </div>`;
+        } else {
+          html += `<span class="achievement-empty">Belum ada pencapaian</span>`;
+        }
+        html += `</div>`;
+
+        html += `<div class="owner-message-box">
+          <b>Halo semuanya,</b><br><br>
+          Saya <b>Rehan</b>, owner <b>Smart Money</b> dan website <b>vintacts.xyz</b>.<br><br>
+          <b>Smart Money</b> adalah aplikasi pencatatan keuangan pintar. Bukan penyimpan uang, melainkan alat bantu mencatat dan menghitung — seperti kalkulator. Dilengkapi grafik analisis <b>mingguan, bulanan, tahunan</b>, serta fitur <b>target keuangan</b>. Semua data tersimpan <b>lokal</b> di HP kalian.<br><br>
+          Aplikasi ini <b>gratis</b>. Kalau ada teman yang membutuhkan, mohon <b>dibagikan</b> agar ikut merasakan manfaatnya.<br><br>
+          <b>Terima kasih.</b>
+        </div>`;
+
+        html += `<div class="media-share-row">
+          <div class="media-section">
+            <span class="media-label">Media kami :</span>
+            <div class="media-icons">
+              <div class="media-icon" data-action="website"><i class="fa-solid fa-globe"></i></div>
+              <div class="media-icon" data-action="tiktok"><i class="fa-brands fa-tiktok"></i></div>
+              <div class="media-icon" data-action="whatsapp"><i class="fa-brands fa-whatsapp"></i></div>
+            </div>
+          </div>
+          <div class="copy-btn" id="profileCopyBtn"><i class="fa-solid fa-link"></i></div>
+        </div>`;
+
+        container.innerHTML = html;
+
+        renderActivityGrid();
+
+        const avatarWrap = document.getElementById('profileAvatarWrap');
+        if (avatarWrap) {
+          avatarWrap.addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = function(ev) {
+                state.profileImage = ev.target.result;
                 save();
-                refreshUI();
-                refreshChart();
-            }
+                renderProfilePage();
+              };
+              reader.readAsDataURL(file);
+            };
+            input.click();
+          });
+        }
 
-            function refreshBalanceDisplay() {
-                const balanceElement = document.getElementById('balanceDisplay');
-                if (state.isBalanceHidden) {
-                    balanceElement.textContent = 'Rp. •••';
-                } else {
-                    balanceElement.textContent = fmt(state.balance);
-                }
-            }
+        const nameDisplay = document.getElementById('profileNameDisplay');
+        if (nameDisplay) {
+          nameDisplay.addEventListener('click', () => {
+            openNamePopup();
+          });
+        }
 
-            function refreshLevelDisplay() {
-                const levelElement = document.getElementById('levelDisplay');
-                if (state.isLevelHidden) {
-                    levelElement.textContent = 'Lv. •';
-                } else {
-                    levelElement.textContent = 'Lv. ' + state.level;
-                }
-            }
+        const handleDisplay = document.getElementById('profileHandleDisplay');
+        if (handleDisplay) {
+          handleDisplay.addEventListener('click', () => {
+            openHandlePopup();
+          });
+        }
 
-            function setupDoubleTapBalance() {
-                const balanceElement = document.getElementById('balanceDisplay');
-                let lastTap = 0;
-                balanceElement.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const now = Date.now();
-                    if (now - lastTap < 300) {
-                        state.isBalanceHidden = !state.isBalanceHidden;
-                        save();
-                        refreshBalanceDisplay();
-                        lastTap = 0;
-                    } else {
-                        lastTap = now;
-                    }
-                });
-            }
+        document.querySelectorAll('.media-icon').forEach(icon => {
+          icon.addEventListener('click', () => {
+            const action = icon.dataset.action;
+            if (action === 'website') window.open('https://vintacts.xyz', '_blank');
+            if (action === 'tiktok') window.open('https://tiktok.com/@noafuture.web.id', '_blank');
+            if (action === 'whatsapp') window.open('https://wa.me/628567858301', '_blank');
+          });
+        });
 
-            function setupDoubleTapLevel() {
-                const levelElement = document.getElementById('levelDisplay');
-                let lastTap = 0;
-                levelElement.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const now = Date.now();
-                    if (now - lastTap < 300) {
-                        state.isLevelHidden = !state.isLevelHidden;
-                        save();
-                        refreshLevelDisplay();
-                        lastTap = 0;
-                    } else {
-                        lastTap = now;
-                    }
-                });
-            }
-
-            function refreshUI() {
-                refreshBalanceDisplay();
-                refreshLevelDisplay();
-                document.getElementById('limitText').textContent = state.transactions.length + '/' + MAX_TX;
-                const inp = document.getElementById('nominalInput');
-                if (inp) {
-                    inp.value = '';
-                    inp.placeholder = 'Rp. 0';
-                }
-                renderHistory();
-            }
-
-            function renderHistory() {
-                const el = document.getElementById('historyList');
-                if (!el) return;
-                if (!state.transactions.length) { 
-                    el.innerHTML = '<div class="history-empty">Belum ada transaksi</div>'; 
-                    return; 
-                }
-                el.innerHTML = [...state.transactions].reverse().map(tx => {
-                    const cls = tx.type === 'in' ? 'in' : 'out';
-                    const arrow = tx.type === 'in' ? 'fa-arrow-up' : 'fa-arrow-down';
-                    const pre = tx.type === 'in' ? '+' : '-';
-                    const amountStr = fmt(tx.amount);
-                    return `<div class="history-item">
-                        <div class="history-left">
-                            <div class="history-icon-circle ${cls}">
-                                <i class="fa-solid ${arrow}"></i>
-                            </div>
-                            <div class="history-info">
-                                <span class="history-name">${tx.name}</span>
-                                <span class="history-date">${tx.date}</span>
-                            </div>
-                        </div>
-                        <span class="history-amount ${cls}">${pre} ${amountStr}</span>
-                    </div>`;
-                }).join('');
-            }
-
-            let chart;
-
-            function refreshChart() {
-                const canvas = document.getElementById('chartCanvas');
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                const data = buildChartData(state.period);
-                if (chart) chart.destroy();
-                const g = ctx.createLinearGradient(0, 0, 0, 300);
-                g.addColorStop(0, 'rgba(255,255,255,0.18)');
-                g.addColorStop(0.4, 'rgba(255,255,255,0.05)');
-                g.addColorStop(1, 'rgba(255,255,255,0)');
-                
-                const maxVal = Math.max(...data.values, 50000);
-                const minVal = Math.min(...data.values, 0);
-                
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: { 
-                        labels: data.labels, 
-                        datasets: [{ 
-                            data: data.values, 
-                            borderColor: '#fff',
-                            backgroundColor: g, 
-                            borderWidth: 1.6, 
-                            tension: 0.35, 
-                            pointRadius: (context) => {
-                                if (context.dataIndex === context.dataset.data.length - 1) return 3;
-                                return 0;
-                            }, 
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: '#fff', 
-                            pointBorderWidth: 2, 
-                            fill: true 
-                        }] 
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        animation: { duration: 250 },
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } }, 
-                        scales: { 
-                            x: { display: false, grid: { display: false }, ticks: { display: false }, border: { display: false } },
-                            y: { display: false, grid: { display: false }, ticks: { display: false }, border: { display: false }, 
-                                min: Math.max(0, minVal - 50000),
-                                max: maxVal + 50000
-                            } 
-                        },
-                        layout: { padding: { top: 6, right: 6, bottom: 6, left: 6 } } 
-                    }
-                });
-            }
-
-            function buildChartData(period) {
-                const db = state.dailyBalances || {};
-                const t = today();
-                const dates = Object.keys(db).sort();
-                let labels = [], vals = [];
-                const td = new Date(t);
-                
-                if (period === 'week') {
-                    const s = new Date(td);
-                    s.setDate(s.getDate() - 6);
-                    for (let d = new Date(s); d <= td; d.setDate(d.getDate() + 1)) { 
-                        const ds = d.toISOString().split('T')[0];
-                        labels.push(ds.slice(5));
-                        vals.push(db[ds] !== undefined ? db[ds] : null); 
-                    }
-                } else if (period === 'month') {
-                    const s = new Date(td);
-                    s.setDate(s.getDate() - 29);
-                    for (let d = new Date(s); d <= td; d.setDate(d.getDate() + 1)) { 
-                        const ds = d.toISOString().split('T')[0];
-                        labels.push(ds.slice(5));
-                        vals.push(db[ds] !== undefined ? db[ds] : null); 
-                    }
-                } else { 
-                    for (let i = 11; i >= 0; i--) { 
-                        const d = new Date(td.getFullYear(), td.getMonth() - i, 1);
-                        const mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-                        const md = dates.filter(x => x.startsWith(mk));
-                        labels.push(mk.slice(5));
-                        vals.push(md.length ? db[md[md.length - 1]] : null); 
-                    } 
-                }
-                
-                let last = 0;
-                for (let i = 0; i < vals.length; i++) { 
-                    if (vals[i] === null || vals[i] === undefined) {
-                        vals[i] = last;
-                    } else {
-                        last = vals[i];
-                    }
-                }
-                return { labels, values: vals };
-            }
-
-            const inp = document.getElementById('nominalInput');
-            if (inp) {
-                inp.addEventListener('focus', () => { 
-                    if (inp.value === '' || inp.value === 'Rp. 0') inp.value = ''; 
-                });
-                inp.addEventListener('blur', () => { 
-                    if (inp.value.replace(/[^0-9]/g, '') === '') inp.value = ''; 
-                });
-                inp.addEventListener('input', () => { 
-                    let r = inp.value.replace(/[^0-9]/g, ''); 
-                    if (!r) { inp.value = ''; return; }
-                    r = r.replace(/^0+/, '') || '0';
-                    inp.value = 'Rp. ' + parseInt(r).toLocaleString('id-ID'); 
-                });
-                inp.addEventListener('keydown', e => { 
-                    const ok = [8, 46, 9, 27, 13, 37, 38, 39, 40]; 
-                    if (ok.includes(e.keyCode)) return; 
-                    if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].includes(e.keyCode)) return; 
-                    if ((e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) e.preventDefault(); 
-                });
-                inp.addEventListener('paste', e => { 
-                    e.preventDefault(); 
-                    const r = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, ''); 
-                    if (r) inp.value = 'Rp. ' + parseInt(r.replace(/^0+/, '') || '0').toLocaleString('id-ID'); 
-                });
-            }
-
-            function getAmount() { 
-                if (!inp) return 0;
-                const r = inp.value.replace(/[^0-9]/g, ''); 
-                return parseInt(r) || 0; 
-            }
-
-            function resetInput() { 
-                if (inp) {
-                    inp.value = '';
-                    inp.placeholder = 'Rp. 0';
-                }
-            }
-            
-            const btnDeposit = document.getElementById('btnDeposit');
-            const btnTarik = document.getElementById('btnTarik');
-            
-            if (btnDeposit) {
-                btnDeposit.addEventListener('click', () => { 
-                    const a = getAmount(); 
-                    if (!a || a <= 0) { resetInput(); return; }
-                    addTx('in', a); 
-                });
-            }
-            
-            if (btnTarik) {
-                btnTarik.addEventListener('click', () => { 
-                    const a = getAmount(); 
-                    if (!a || a <= 0 || a > state.balance) { resetInput(); return; }
-                    addTx('out', a); 
-                });
-            }
-            
-            const periodBtns = document.querySelectorAll('.period-btn');
-            periodBtns.forEach(b => { 
-                b.addEventListener('click', () => { 
-                    periodBtns.forEach(x => x.classList.remove('active'));
-                    b.classList.add('active');
-                    state.period = b.dataset.period;
-                    save();
-                    refreshChart(); 
-                }); 
+        const copyBtn = document.getElementById('profileCopyBtn');
+        if (copyBtn) {
+          copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText('appsgeyser.io/19890230/Smart-money').then(() => {
+              showToast();
+            }).catch(() => {
+              showToast();
             });
+          });
+        }
+      }
 
-            load();
-            refreshUI();
-            refreshChart();
-            
-            setupDoubleTapBalance();
-            setupDoubleTapLevel();
-            
-            periodBtns.forEach(b => { 
-                if (b.dataset.period === state.period) b.classList.add('active');
-                else b.classList.remove('active'); 
-            });
-        })();
-    </script>
+      function renderActivityGrid() {
+        const grid = document.getElementById('activityGrid');
+        if (!grid) return;
+
+        const days = [];
+        const td = new Date();
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(td);
+          d.setDate(d.getDate() - i);
+          days.push(d.toISOString().split('T')[0]);
+        }
+
+        const maxTx = Math.max(1, ...days.map(d => {
+          return state.transactions.filter(tx => tx.date.startsWith(d)).length;
+        }));
+
+        let html = '';
+        days.forEach(d => {
+          const count = state.transactions.filter(tx => tx.date.startsWith(d)).length;
+          let level = 0;
+          if (count > 0) {
+            const ratio = count / maxTx;
+            if (ratio <= 0.2) level = 1;
+            else if (ratio <= 0.4) level = 2;
+            else if (ratio <= 0.6) level = 3;
+            else if (ratio <= 0.8) level = 4;
+            else level = 5;
+          }
+          html += `<div class="activity-cell level-${level}" title="${d}: ${count} transaksi"></div>`;
+        });
+        grid.innerHTML = html;
+      }
+
+      function openNamePopup() {
+        const overlay = document.getElementById('popupNameOverlay');
+        const input = document.getElementById('popupNameEditInput');
+        input.value = state.profileName;
+        overlay.classList.add('active');
+
+        document.getElementById('btnNameSave').onclick = () => {
+          const name = input.value.trim();
+          if (name) {
+            state.profileName = name;
+            save();
+            renderProfilePage();
+          }
+          overlay.classList.remove('active');
+        };
+
+        document.getElementById('btnNameCancel').onclick = () => {
+          overlay.classList.remove('active');
+        };
+
+        overlay.onclick = (e) => {
+          if (e.target === overlay) overlay.classList.remove('active');
+        };
+      }
+
+      function openHandlePopup() {
+        const overlay = document.getElementById('popupHandleOverlay');
+        const input = document.getElementById('popupHandleEditInput');
+        input.value = state.profileHandle;
+        overlay.classList.add('active');
+
+        document.getElementById('btnHandleSave').onclick = () => {
+          const handle = input.value.trim();
+          if (handle) {
+            state.profileHandle = handle.startsWith('@') ? handle : '@' + handle;
+            save();
+            renderProfilePage();
+          }
+          overlay.classList.remove('active');
+        };
+
+        document.getElementById('btnHandleCancel').onclick = () => {
+          overlay.classList.remove('active');
+        };
+
+        overlay.onclick = (e) => {
+          if (e.target === overlay) overlay.classList.remove('active');
+        };
+      }
+
+      function openConfirmDelete(index) {
+        pendingDeleteIndex = index;
+        const target = state.targets[index];
+        document.getElementById('confirmTargetName').textContent = target.name;
+        document.getElementById('confirmOverlay').classList.add('active');
+      }
+
+      function closeConfirmDelete() {
+        pendingDeleteIndex = null;
+        document.getElementById('confirmOverlay').classList.remove('active');
+      }
+
+      function executeDelete() {
+        if (pendingDeleteIndex !== null) {
+          state.targets.splice(pendingDeleteIndex, 1);
+          save();
+          renderTargetPage();
+        }
+        closeConfirmDelete();
+      }
+
+      function refreshUI() {
+        refreshBalanceDisplay();
+        refreshLevelDisplay();
+        document.getElementById('limitText').textContent = Math.min(state.transactions.length, MAX_HOME_TX) + '/' + MAX_HOME_TX;
+        const inp = document.getElementById('nominalInput');
+        const ket = document.getElementById('keteranganInput');
+        if (inp) {
+          inp.value = '';
+          inp.placeholder = 'Rp. 0';
+        }
+        if (ket) {
+          ket.value = '';
+        }
+        renderHomeHistory();
+        renderHistoryPage();
+        renderTargetPage();
+        renderProfilePage();
+      }
+
+      let chart;
+
+      function refreshChart() {
+        const canvas = document.getElementById('chartCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const data = buildChartData(state.period);
+        if (chart) chart.destroy();
+        const g = ctx.createLinearGradient(0, 0, 0, 300);
+        g.addColorStop(0, 'rgba(255,255,255,0.18)');
+        g.addColorStop(0.4, 'rgba(255,255,255,0.05)');
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+
+        const maxVal = Math.max(...data.values, 50000);
+        const minVal = Math.min(...data.values, 0);
+
+        chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.labels,
+            datasets: [{
+              data: data.values,
+              borderColor: '#fff',
+              backgroundColor: g,
+              borderWidth: 1.6,
+              tension: 0.35,
+              pointRadius: (context) => context.dataIndex === context.dataset.data.length - 1 ? 3 : 0,
+              pointBackgroundColor: '#fff',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 250 },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              x: { display: false, grid: { display: false }, ticks: { display: false }, border: { display: false } },
+              y: { display: false, grid: { display: false }, ticks: { display: false }, border: { display: false },
+                min: Math.max(0, minVal - 50000),
+                max: maxVal + 50000
+              }
+            },
+            layout: { padding: { top: 6, right: 6, bottom: 6, left: 6 } }
+          }
+        });
+      }
+
+      function buildChartData(period) {
+        const db = state.dailyBalances || {};
+        const t = today();
+        const dates = Object.keys(db).sort();
+        let labels = [],
+          vals = [];
+        const td = new Date(t);
+
+        if (period === 'week') {
+          const s = new Date(td);
+          s.setDate(s.getDate() - 6);
+          for (let d = new Date(s); d <= td; d.setDate(d.getDate() + 1)) {
+            const ds = d.toISOString().split('T')[0];
+            labels.push(ds.slice(5));
+            vals.push(db[ds] !== undefined ? db[ds] : null);
+          }
+        } else if (period === 'month') {
+          const s = new Date(td);
+          s.setDate(s.getDate() - 29);
+          for (let d = new Date(s); d <= td; d.setDate(d.getDate() + 1)) {
+            const ds = d.toISOString().split('T')[0];
+            labels.push(ds.slice(5));
+            vals.push(db[ds] !== undefined ? db[ds] : null);
+          }
+        } else {
+          for (let i = 11; i >= 0; i--) {
+            const d = new Date(td.getFullYear(), td.getMonth() - i, 1);
+            const mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            const md = dates.filter(x => x.startsWith(mk));
+            labels.push(mk.slice(5));
+            vals.push(md.length ? db[md[md.length - 1]] : null);
+          }
+        }
+
+        let last = 0;
+        for (let i = 0; i < vals.length; i++) {
+          if (vals[i] === null || vals[i] === undefined) {
+            vals[i] = last;
+          } else {
+            last = vals[i];
+          }
+        }
+        return { labels, values: vals };
+      }
+
+      function switchPage(pageName) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const target = document.getElementById('page-' + pageName);
+        if (target) target.classList.add('active');
+        if (pageName === 'history') renderHistoryPage();
+        if (pageName === 'home') refreshChart();
+        if (pageName === 'target') renderTargetPage();
+        if (pageName === 'profile') renderProfilePage();
+      }
+
+      const inp = document.getElementById('nominalInput');
+      if (inp) {
+        inp.addEventListener('focus', () => {
+          if (inp.value === '' || inp.value === 'Rp. 0') inp.value = '';
+        });
+        inp.addEventListener('blur', () => {
+          if (inp.value.replace(/[^0-9]/g, '') === '') inp.value = '';
+        });
+        inp.addEventListener('input', () => {
+          let r = inp.value.replace(/[^0-9]/g, '');
+          if (!r) {
+            inp.value = '';
+            return;
+          }
+          r = r.replace(/^0+/, '') || '0';
+          inp.value = 'Rp. ' + parseInt(r).toLocaleString('id-ID');
+        });
+        inp.addEventListener('keydown', e => {
+          const ok = [8, 46, 9, 27, 13, 37, 38, 39, 40];
+          if (ok.includes(e.keyCode)) return;
+          if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].includes(e.keyCode)) return;
+          if ((e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) e.preventDefault();
+        });
+        inp.addEventListener('paste', e => {
+          e.preventDefault();
+          const r = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+          if (r) inp.value = 'Rp. ' + parseInt(r.replace(/^0+/, '') || '0').toLocaleString('id-ID');
+        });
+      }
+
+      function getAmount() {
+        if (!inp) return 0;
+        const r = inp.value.replace(/[^0-9]/g, '');
+        return parseInt(r) || 0;
+      }
+
+      function getKeterangan() {
+        const ket = document.getElementById('keteranganInput');
+        return ket ? ket.value : '';
+      }
+
+      function resetInputs() {
+        if (inp) {
+          inp.value = '';
+          inp.placeholder = 'Rp. 0';
+        }
+        const ket = document.getElementById('keteranganInput');
+        if (ket) ket.value = '';
+      }
+
+      const btnDeposit = document.getElementById('btnDeposit');
+      const btnTarik = document.getElementById('btnTarik');
+
+      if (btnDeposit) {
+        btnDeposit.addEventListener('click', () => {
+          const a = getAmount();
+          if (!a || a <= 0) {
+            resetInputs();
+            return;
+          }
+          addTx('in', a, getKeterangan());
+          resetInputs();
+        });
+      }
+
+      if (btnTarik) {
+        btnTarik.addEventListener('click', () => {
+          const a = getAmount();
+          if (!a || a <= 0 || a > state.balance) {
+            resetInputs();
+            return;
+          }
+          addTx('out', a, getKeterangan());
+          resetInputs();
+        });
+      }
+
+      const periodBtns = document.querySelectorAll('.period-btn');
+      periodBtns.forEach(b => {
+        b.addEventListener('click', () => {
+          periodBtns.forEach(x => x.classList.remove('active'));
+          b.classList.add('active');
+          state.period = b.dataset.period;
+          save();
+          refreshChart();
+        });
+      });
+
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => {
+        item.addEventListener('click', () => {
+          navItems.forEach(nav => nav.classList.remove('active'));
+          item.classList.add('active');
+          const page = item.dataset.page;
+          switchPage(page);
+        });
+      });
+
+      const categoryBtns = document.querySelectorAll('.category-btn');
+      categoryBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          categoryBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentFilter = btn.dataset.filter;
+          renderHistoryPage();
+        });
+      });
+
+      const popupOverlay = document.getElementById('popupOverlay');
+      const popupImgPreview = document.getElementById('popupImgPreview');
+      const popupImageInput = document.getElementById('popupImageInput');
+      const popupNameInput = document.getElementById('popupNameInput');
+      const popupAmountInput = document.getElementById('popupAmountInput');
+      const popupError = document.getElementById('popupError');
+      const btnPopupCreate = document.getElementById('btnPopupCreate');
+      const btnPopupCancel = document.getElementById('btnPopupCancel');
+
+      function openPopup() {
+        if (state.targets.length >= MAX_TARGET) return;
+        popupImageData = null;
+        popupImgPreview.innerHTML = '<i class="fa-solid fa-image"></i>';
+        popupNameInput.value = '';
+        popupAmountInput.value = '';
+        popupError.style.display = 'none';
+        popupOverlay.classList.add('active');
+      }
+
+      function closePopup() {
+        popupOverlay.classList.remove('active');
+      }
+
+      btnPopupCancel.addEventListener('click', closePopup);
+      popupOverlay.addEventListener('click', (e) => {
+        if (e.target === popupOverlay) closePopup();
+      });
+
+      popupImgPreview.addEventListener('click', () => {
+        popupImageInput.click();
+      });
+
+      popupImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          popupImageData = ev.target.result;
+          popupImgPreview.innerHTML = `<img src="${popupImageData}" alt="preview">`;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      popupAmountInput.addEventListener('input', () => {
+        let r = popupAmountInput.value.replace(/[^0-9]/g, '');
+        if (!r) {
+          popupAmountInput.value = '';
+          return;
+        }
+        r = r.replace(/^0+/, '') || '0';
+        popupAmountInput.value = 'Rp. ' + parseInt(r).toLocaleString('id-ID');
+      });
+
+      btnPopupCreate.addEventListener('click', () => {
+        const name = popupNameInput.value.trim();
+        const rawAmount = popupAmountInput.value.replace(/[^0-9]/g, '');
+        const amount = parseInt(rawAmount) || 0;
+
+        popupError.style.display = 'none';
+        if (!name) {
+          popupError.textContent = 'Nama target harus diisi';
+          popupError.style.display = 'block';
+          return;
+        }
+        if (!amount || amount <= 0) {
+          popupError.textContent = 'Nominal target harus diisi';
+          popupError.style.display = 'block';
+          return;
+        }
+        if (state.targets.length >= MAX_TARGET) {
+          popupError.textContent = 'Maksimal ' + MAX_TARGET + ' target';
+          popupError.style.display = 'block';
+          return;
+        }
+
+        state.targets.push({
+          name: name,
+          targetAmount: amount,
+          imageData: popupImageData
+        });
+        save();
+        renderTargetPage();
+        closePopup();
+      });
+
+      document.getElementById('btnConfirmCancel').addEventListener('click', closeConfirmDelete);
+      document.getElementById('btnConfirmDelete').addEventListener('click', executeDelete);
+      document.getElementById('confirmOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('confirmOverlay')) closeConfirmDelete();
+      });
+
+      load();
+      refreshUI();
+      refreshChart();
+      setupDoubleTapBalance();
+      setupDoubleTapLevel();
+      setupBellClick();
+
+      periodBtns.forEach(b => {
+        if (b.dataset.period === state.period) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+    })();
+  </script>
 </body>
 </html>
