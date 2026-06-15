@@ -34,25 +34,45 @@
             overflow: hidden;
         }
 
-        .main-scroll {
+        /* Container utama - TIDAK BISA SCROLL (kaku) */
+        .main-container {
             width: 100%;
             height: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
-        .main-content {
+        /* Area konten yang TIDAK BISA SCROLL (kaku/fixed) */
+        .fixed-content {
             flex-shrink: 0;
             width: 100%;
             max-width: 480px;
             margin: 0 auto;
-            padding: 24px 20px 40px 20px;
+            padding: 24px 20px 16px 20px;
             display: flex;
             flex-direction: column;
             gap: 16px;
+            overflow: visible;
+        }
+
+        /* Area history yang BOLEH SCROLL */
+        .history-scrollable {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 20px 20px 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .history-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-bottom: 8px;
         }
 
         .balance-section {
@@ -81,6 +101,12 @@
             color: #ffffff;
             letter-spacing: -0.5px;
             line-height: 1.1;
+            cursor: pointer;
+            transition: opacity 0.1s;
+        }
+
+        .balance-amount:active {
+            opacity: 0.7;
         }
 
         .level-badge {
@@ -93,6 +119,12 @@
             border-radius: 6px;
             letter-spacing: 0.5px;
             white-space: nowrap;
+            cursor: pointer;
+            transition: opacity 0.1s;
+        }
+
+        .level-badge:active {
+            opacity: 0.7;
         }
 
         .chart-box {
@@ -256,13 +288,6 @@
             letter-spacing: 0.5px;
         }
 
-        .history-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-bottom: 20px;
-        }
-
         .history-item {
             display: flex;
             align-items: center;
@@ -352,8 +377,8 @@
         }
 
         @media (min-width: 768px) {
-            .main-content {
-                padding: 32px 24px 40px 24px;
+            .fixed-content {
+                padding: 32px 24px 16px 24px;
                 gap: 18px;
             }
             .balance-amount {
@@ -371,13 +396,17 @@
                 font-size: 14px;
                 padding: 16px 20px;
             }
+            .history-scrollable {
+                padding: 0 24px 24px 24px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="main-scroll">
-        <div class="main-content">
+    <div class="main-container">
+        <!-- Area KAKU / FIXED (tidak bisa scroll) -->
+        <div class="fixed-content">
             <div class="balance-section">
                 <div class="balance-info">
                     <span class="balance-label">Total Saldo</span>
@@ -413,7 +442,10 @@
                 </div>
                 <span class="limit-text" id="limitText">0/10</span>
             </div>
+        </div>
 
+        <!-- Area HISTORY yang BOLEH SCROLL -->
+        <div class="history-scrollable">
             <div class="history-section" id="historyList">
                 <div class="history-empty">Belum ada transaksi</div>
             </div>
@@ -430,7 +462,8 @@
                 period: 'month',
                 transactions: [],
                 dailyBalances: {},
-                lastCleanup: new Date().toISOString().split('T')[0]
+                isBalanceHidden: false,
+                isLevelHidden: false
             };
             let state;
 
@@ -439,40 +472,54 @@
                     const raw = localStorage.getItem(STORAGE_KEY);
                     state = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(defaultState));
                     if (!state.dailyBalances) state.dailyBalances = {};
-                    if (!state.lastCleanup) state.lastCleanup = new Date().toISOString().split('T')[0];
-                } catch (e) { state = JSON.parse(JSON.stringify(defaultState)); }
+                    if (state.isBalanceHidden === undefined) state.isBalanceHidden = false;
+                    if (state.isLevelHidden === undefined) state.isLevelHidden = false;
+                    if (!state.transactions) state.transactions = [];
+                    if (state.level === undefined) state.level = levelFrom(state.balance);
+                } catch (e) { 
+                    state = JSON.parse(JSON.stringify(defaultState)); 
+                }
             }
 
-            function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+            function save() { 
+                try { 
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
+                } catch (e) {} 
+            }
 
-            function levelFrom(b) { return b < 1000000 ? 0 : Math.floor(b / 1000000); }
+            function levelFrom(b) { 
+                return b < 1000000 ? 0 : Math.floor(b / 1000000); 
+            }
 
-            function fmt(n) { return 'Rp. ' + n.toLocaleString('id-ID'); }
+            function fmt(n) { 
+                return 'Rp. ' + n.toLocaleString('id-ID'); 
+            }
 
-            function today() { return new Date().toISOString().split('T')[0]; }
+            function today() { 
+                return new Date().toISOString().split('T')[0]; 
+            }
 
             function now() {
                 const d = new Date();
-                return today() + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-            }
-
-            function cleanup() {
-                const t = today();
-                if (state.lastCleanup === t) return;
-                const start = new Date(state.lastCleanup || '2026-06-01');
-                const end = new Date(t);
-                let count = 0;
-                const cur = new Date(start);
-                cur.setDate(cur.getDate() + 1);
-                while (cur <= end) { count++; cur.setDate(cur.getDate() + 1); }
-                for (let i = 0; i < count; i++) { if (state.transactions.length > 0) state.transactions.shift(); }
-                state.lastCleanup = t;
-                save();
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const hours = String(d.getHours()).padStart(2, '0');
+                const minutes = String(d.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}, ${hours}:${minutes}`;
             }
 
             function addTx(type, amount) {
-                cleanup();
-                if (state.transactions.length >= MAX_TX) state.transactions.shift();
+                // HAPUS SISTEM CLEANUP PER HARI
+                // Sekarang hanya hapus saat sudah 10 transaksi dan ingin menambah transaksi baru
+                // Maka transaksi TERLAMA (index 0) yang dihapus
+                
+                if (state.transactions.length >= MAX_TX) {
+                    // Hapus transaksi paling pertama/terlama
+                    state.transactions.shift();
+                }
+                
+                // Tambah transaksi baru
                 state.transactions.push({ 
                     id: Date.now(), 
                     type, 
@@ -480,36 +527,98 @@
                     date: now(), 
                     name: type === 'in' ? 'Deposit' : 'Tarik'
                 });
+                
+                // Update balance
                 state.balance += type === 'in' ? amount : -amount;
                 if (state.balance < 0) state.balance = 0;
+                
+                // Update level
                 state.level = levelFrom(state.balance);
+                
+                // Simpan daily balance untuk chart
                 state.dailyBalances[today()] = state.balance;
+                
                 save();
                 refreshUI();
                 refreshChart();
             }
 
+            function refreshBalanceDisplay() {
+                const balanceElement = document.getElementById('balanceDisplay');
+                if (state.isBalanceHidden) {
+                    balanceElement.textContent = 'Rp. •••';
+                } else {
+                    balanceElement.textContent = fmt(state.balance);
+                }
+            }
+
+            function refreshLevelDisplay() {
+                const levelElement = document.getElementById('levelDisplay');
+                if (state.isLevelHidden) {
+                    levelElement.textContent = 'Lv. •';
+                } else {
+                    levelElement.textContent = 'Lv. ' + state.level;
+                }
+            }
+
+            function setupDoubleTapBalance() {
+                const balanceElement = document.getElementById('balanceDisplay');
+                let lastTap = 0;
+                balanceElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const now = Date.now();
+                    if (now - lastTap < 300) {
+                        state.isBalanceHidden = !state.isBalanceHidden;
+                        save();
+                        refreshBalanceDisplay();
+                        lastTap = 0;
+                    } else {
+                        lastTap = now;
+                    }
+                });
+            }
+
+            function setupDoubleTapLevel() {
+                const levelElement = document.getElementById('levelDisplay');
+                let lastTap = 0;
+                levelElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const now = Date.now();
+                    if (now - lastTap < 300) {
+                        state.isLevelHidden = !state.isLevelHidden;
+                        save();
+                        refreshLevelDisplay();
+                        lastTap = 0;
+                    } else {
+                        lastTap = now;
+                    }
+                });
+            }
+
             function refreshUI() {
-                document.getElementById('balanceDisplay').textContent = fmt(state.balance);
-                document.getElementById('levelDisplay').textContent = 'Lv. ' + state.level;
+                refreshBalanceDisplay();
+                refreshLevelDisplay();
                 document.getElementById('limitText').textContent = state.transactions.length + '/' + MAX_TX;
                 const inp = document.getElementById('nominalInput');
-                inp.value = '';
-                inp.placeholder = 'Rp. 0';
+                if (inp) {
+                    inp.value = '';
+                    inp.placeholder = 'Rp. 0';
+                }
                 renderHistory();
             }
 
             function renderHistory() {
                 const el = document.getElementById('historyList');
+                if (!el) return;
                 if (!state.transactions.length) { 
                     el.innerHTML = '<div class="history-empty">Belum ada transaksi</div>'; 
                     return; 
                 }
                 el.innerHTML = [...state.transactions].reverse().map(tx => {
                     const cls = tx.type === 'in' ? 'in' : 'out';
-                    // ↑ untuk deposit (masuk), ↓ untuk tarik (keluar)
                     const arrow = tx.type === 'in' ? 'fa-arrow-up' : 'fa-arrow-down';
                     const pre = tx.type === 'in' ? '+' : '-';
+                    const amountStr = fmt(tx.amount);
                     return `<div class="history-item">
                         <div class="history-left">
                             <div class="history-icon-circle ${cls}">
@@ -520,7 +629,7 @@
                                 <span class="history-date">${tx.date}</span>
                             </div>
                         </div>
-                        <span class="history-amount ${cls}">${pre} ${fmt(tx.amount)}</span>
+                        <span class="history-amount ${cls}">${pre} ${amountStr}</span>
                     </div>`;
                 }).join('');
             }
@@ -528,13 +637,19 @@
             let chart;
 
             function refreshChart() {
-                const ctx = document.getElementById('chartCanvas').getContext('2d');
+                const canvas = document.getElementById('chartCanvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
                 const data = buildChartData(state.period);
                 if (chart) chart.destroy();
                 const g = ctx.createLinearGradient(0, 0, 0, 300);
                 g.addColorStop(0, 'rgba(255,255,255,0.18)');
                 g.addColorStop(0.4, 'rgba(255,255,255,0.05)');
                 g.addColorStop(1, 'rgba(255,255,255,0)');
+                
+                const maxVal = Math.max(...data.values, 50000);
+                const minVal = Math.min(...data.values, 0);
+                
                 chart = new Chart(ctx, {
                     type: 'line',
                     data: { 
@@ -545,7 +660,10 @@
                             backgroundColor: g, 
                             borderWidth: 1.6, 
                             tension: 0.35, 
-                            pointRadius: (c) => c.dataIndex === c.dataset.data.length - 1 ? 3 : 0, 
+                            pointRadius: (context) => {
+                                if (context.dataIndex === context.dataset.data.length - 1) return 3;
+                                return 0;
+                            }, 
                             pointBackgroundColor: '#fff',
                             pointBorderColor: '#fff', 
                             pointBorderWidth: 2, 
@@ -560,8 +678,8 @@
                         scales: { 
                             x: { display: false, grid: { display: false }, ticks: { display: false }, border: { display: false } },
                             y: { display: false, grid: { display: false }, ticks: { display: false }, border: { display: false }, 
-                                min: Math.max(0, Math.min(...data.values) - 50000),
-                                max: Math.max(...data.values) + 50000 || 50000 
+                                min: Math.max(0, minVal - 50000),
+                                max: maxVal + 50000
                             } 
                         },
                         layout: { padding: { top: 6, right: 6, bottom: 6, left: 6 } } 
@@ -575,12 +693,13 @@
                 const dates = Object.keys(db).sort();
                 let labels = [], vals = [];
                 const td = new Date(t);
+                
                 if (period === 'week') {
                     const s = new Date(td);
                     s.setDate(s.getDate() - 6);
                     for (let d = new Date(s); d <= td; d.setDate(d.getDate() + 1)) { 
                         const ds = d.toISOString().split('T')[0];
-                        labels.push(ds);
+                        labels.push(ds.slice(5));
                         vals.push(db[ds] !== undefined ? db[ds] : null); 
                     }
                 } else if (period === 'month') {
@@ -588,7 +707,7 @@
                     s.setDate(s.getDate() - 29);
                     for (let d = new Date(s); d <= td; d.setDate(d.getDate() + 1)) { 
                         const ds = d.toISOString().split('T')[0];
-                        labels.push(ds);
+                        labels.push(ds.slice(5));
                         vals.push(db[ds] !== undefined ? db[ds] : null); 
                     }
                 } else { 
@@ -596,64 +715,85 @@
                         const d = new Date(td.getFullYear(), td.getMonth() - i, 1);
                         const mk = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
                         const md = dates.filter(x => x.startsWith(mk));
-                        labels.push(mk);
+                        labels.push(mk.slice(5));
                         vals.push(md.length ? db[md[md.length - 1]] : null); 
                     } 
                 }
+                
                 let last = 0;
                 for (let i = 0; i < vals.length; i++) { 
-                    if (vals[i] === null) vals[i] = last;
-                    else last = vals[i]; 
+                    if (vals[i] === null || vals[i] === undefined) {
+                        vals[i] = last;
+                    } else {
+                        last = vals[i];
+                    }
                 }
                 return { labels, values: vals };
             }
 
             const inp = document.getElementById('nominalInput');
-            inp.addEventListener('focus', () => { if (inp.value === '' || inp.value === 'Rp. 0') inp.value = ''; });
-            inp.addEventListener('blur', () => { if (inp.value.replace(/[^0-9]/g, '') === '') inp.value = ''; });
-            inp.addEventListener('input', () => { 
-                let r = inp.value.replace(/[^0-9]/g, ''); 
-                if (!r) { inp.value = ''; return; }
-                r = r.replace(/^0+/, '') || '0';
-                inp.value = 'Rp. ' + parseInt(r).toLocaleString('id-ID'); 
-            });
-            inp.addEventListener('keydown', e => { 
-                const ok = [8, 46, 9, 27, 13, 37, 38, 39, 40]; 
-                if (ok.includes(e.keyCode)) return; 
-                if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].includes(e.keyCode)) return; 
-                if ((e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) e.preventDefault(); 
-            });
-            inp.addEventListener('paste', e => { 
-                e.preventDefault(); 
-                const r = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, ''); 
-                if (r) inp.value = 'Rp. ' + parseInt(r.replace(/^0+/, '') || '0').toLocaleString('id-ID'); 
-            });
+            if (inp) {
+                inp.addEventListener('focus', () => { 
+                    if (inp.value === '' || inp.value === 'Rp. 0') inp.value = ''; 
+                });
+                inp.addEventListener('blur', () => { 
+                    if (inp.value.replace(/[^0-9]/g, '') === '') inp.value = ''; 
+                });
+                inp.addEventListener('input', () => { 
+                    let r = inp.value.replace(/[^0-9]/g, ''); 
+                    if (!r) { inp.value = ''; return; }
+                    r = r.replace(/^0+/, '') || '0';
+                    inp.value = 'Rp. ' + parseInt(r).toLocaleString('id-ID'); 
+                });
+                inp.addEventListener('keydown', e => { 
+                    const ok = [8, 46, 9, 27, 13, 37, 38, 39, 40]; 
+                    if (ok.includes(e.keyCode)) return; 
+                    if ((e.ctrlKey || e.metaKey) && [65, 67, 86, 88].includes(e.keyCode)) return; 
+                    if ((e.keyCode < 48 || e.keyCode > 57) && (e.keyCode < 96 || e.keyCode > 105)) e.preventDefault(); 
+                });
+                inp.addEventListener('paste', e => { 
+                    e.preventDefault(); 
+                    const r = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, ''); 
+                    if (r) inp.value = 'Rp. ' + parseInt(r.replace(/^0+/, '') || '0').toLocaleString('id-ID'); 
+                });
+            }
 
             function getAmount() { 
+                if (!inp) return 0;
                 const r = inp.value.replace(/[^0-9]/g, ''); 
                 return parseInt(r) || 0; 
             }
 
             function resetInput() { 
-                inp.value = '';
-                inp.placeholder = 'Rp. 0'; 
+                if (inp) {
+                    inp.value = '';
+                    inp.placeholder = 'Rp. 0';
+                }
             }
             
-            document.getElementById('btnDeposit').addEventListener('click', () => { 
-                const a = getAmount(); 
-                if (!a || a <= 0) { resetInput(); return; }
-                addTx('in', a); 
-            });
+            const btnDeposit = document.getElementById('btnDeposit');
+            const btnTarik = document.getElementById('btnTarik');
             
-            document.getElementById('btnTarik').addEventListener('click', () => { 
-                const a = getAmount(); 
-                if (!a || a <= 0 || a > state.balance) { resetInput(); return; }
-                addTx('out', a); 
-            });
+            if (btnDeposit) {
+                btnDeposit.addEventListener('click', () => { 
+                    const a = getAmount(); 
+                    if (!a || a <= 0) { resetInput(); return; }
+                    addTx('in', a); 
+                });
+            }
             
-            document.querySelectorAll('.period-btn').forEach(b => { 
+            if (btnTarik) {
+                btnTarik.addEventListener('click', () => { 
+                    const a = getAmount(); 
+                    if (!a || a <= 0 || a > state.balance) { resetInput(); return; }
+                    addTx('out', a); 
+                });
+            }
+            
+            const periodBtns = document.querySelectorAll('.period-btn');
+            periodBtns.forEach(b => { 
                 b.addEventListener('click', () => { 
-                    document.querySelectorAll('.period-btn').forEach(x => x.classList.remove('active'));
+                    periodBtns.forEach(x => x.classList.remove('active'));
                     b.classList.add('active');
                     state.period = b.dataset.period;
                     save();
@@ -664,7 +804,11 @@
             load();
             refreshUI();
             refreshChart();
-            document.querySelectorAll('.period-btn').forEach(b => { 
+            
+            setupDoubleTapBalance();
+            setupDoubleTapLevel();
+            
+            periodBtns.forEach(b => { 
                 if (b.dataset.period === state.period) b.classList.add('active');
                 else b.classList.remove('active'); 
             });
